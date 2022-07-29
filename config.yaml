@@ -1,0 +1,9 @@
+appName: DremioCredentialSync
+logLevel: INFO
+
+Dremio:
+    DremioCloud: True
+    URL: https://api.dremio.cloud/v0
+    Username:
+    Password:
+    ProjectID:

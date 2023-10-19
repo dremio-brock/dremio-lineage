@@ -38,10 +38,10 @@ def dremio_auth(url, user, password):
         'Content-Type': 'application/json'
     }
     logging.debug('Authentication payload: %s', payload)  # Log the payload
-
-    response = requests.request("POST", url, headers=headers, data=payload, verify=False)
     logging.debug('Authentication URL: %s', url)  # Log the URL
-
+    
+    response = requests.request("POST", url, headers=headers, data=payload, verify=False)
+    
     if response.status_code != 200:
         logging.error('Authentication failed with Dremio')
         exit(0)

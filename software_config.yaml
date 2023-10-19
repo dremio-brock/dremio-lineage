@@ -1,0 +1,9 @@
+appName: DremioCredentialSync
+logLevel: DEBUG
+
+Dremio:
+    DremioCloud: False
+    URL: http://localhost:9047
+    Username: brock@dremio.com
+    Password: dremio123
+    ProjectID:

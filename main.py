@@ -1,9 +1,12 @@
-import time
-import os
 import requests
 import json
 import logging
 import confuse
+import urllib3
+
+# Disable SSL warnings
+urllib3.disable_warnings()
+
 
 config = confuse.Configuration('DremioCredentialSync', __name__)
 config.set_file('config.yaml', base_for_paths=True)
@@ -11,10 +14,16 @@ config.set_file('config.yaml', base_for_paths=True)
 dremio_url = config['Dremio']['URL']
 dremio_user = config['Dremio']['Username']
 dremio_password = config['Dremio']['Password']
-dremio_cloud = config['Dremio']['DremioCloud']
+dremio_cloud = config['Dremio']['DremioCloud'].get(bool)
 dremio_project = config['Dremio']['ProjectID']
-lineage = []
 
+# Load the log level from the configuration
+log_level = config['logLevel'].get()
+
+# Configure logging
+logging.basicConfig(filename='debug.log', level=log_level)
+
+lineage = []
 
 def dremio_auth(url, user, password):
     logging.info('Authenticating with Dremio')
@@ -28,19 +37,20 @@ def dremio_auth(url, user, password):
     headers = {
         'Content-Type': 'application/json'
     }
+    logging.debug('Authentication payload: %s', payload)  # Log the payload
 
     response = requests.request("POST", url, headers=headers, data=payload, verify=False)
+    logging.debug('Authentication URL: %s', url)  # Log the URL
 
     if response.status_code != 200:
-        print(response)
+        logging.error('Authentication failed with Dremio')
         exit(0)
     else:
         token = response.json()['token']
         return token
 
-
 def get_catalogs(token):
-
+    logging.info('Fetching catalogs')
     if dremio_cloud is False:
         url = "{url}/api/v3/catalog".format(url=dremio_url)
     else:
@@ -50,12 +60,15 @@ def get_catalogs(token):
     headers = {
         'Authorization': token
     }
+    logging.debug('Get Catalogs payload: %s', payload)  # Log the payload
+    logging.debug('Get Catalogs URL: %s', url)  # Log the URL
 
     response = requests.request("GET", url, headers=headers, data=payload, verify=False).json()
-    print(response)
+    logging.debug('Catalogs: %s', response)
     return response['data']
 
 def get_catalog_children(token, catalog_id):
+    logging.info('Fetching catalog children')
     if dremio_cloud is False:
         url = "{url}/api/v3/catalog/{id}".format(url=dremio_url, id=catalog_id)
     else:
@@ -65,11 +78,15 @@ def get_catalog_children(token, catalog_id):
     headers = {
         'Authorization': token
     }
+    logging.debug('Get Catalog Children payload: %s', payload)  # Log the payload
+    logging.debug('Get Catalog Children URL: %s', url)  # Log the URL
 
     response = requests.request("GET", url, headers=headers, data=payload, verify=False).json()
+    logging.debug('Catalog Children: %s', response)
     return response
 
 def get_graph(token, catalog_id):
+    logging.info('Fetching catalog graph')
     if dremio_cloud is False:
         url = "{url}/api/v3/catalog/{id}/graph".format(url=dremio_url, id=catalog_id)
     else:
@@ -79,10 +96,12 @@ def get_graph(token, catalog_id):
     headers = {
         'Authorization': token
     }
+    logging.debug('Get Catalog Graph payload: %s', payload)  # Log the payload
+    logging.debug('Get Catalog Graph URL: %s', url)  # Log the URL
 
     response = requests.request("GET", url, headers=headers, data=payload, verify=False).json()
+    logging.debug('Catalog Graph: %s', response)
     return response
-
 
 if __name__ == '__main__':
     if dremio_cloud is False:
